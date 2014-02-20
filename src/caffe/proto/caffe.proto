@@ -89,6 +89,18 @@ message SolverState {
   repeated BlobProto history = 3; // The history for sgd solvers
 }
 
+message RegularizerParameter {
+// Weight regularizer type  
+  enum RegularizerType {
+    L1 = 0;
+    L2 = 1;
+    MAX_NORM = 2; // not fully implemented yet
+  }
+  optional RegularizerType type = 1;
+  // Coefficent controls how strong to regularize
+  optional float coeff = 2;
+}
+  
 // Update the next available ID when you add a new LayerParameter field.
 //
 // LayerParameter next available ID: 22
@@ -432,4 +444,6 @@ message V0LayerParameter {
   optional float regularizer_coeff = 61; 
 
   optional HDF5OutputParameter hdf5_output_param = 1001;
+
+  repeated RegularizerParameter regularizer = 2001;
 }
