@@ -90,7 +90,7 @@ message SolverState {
 }
 
 message RegularizerParameter {
-// Weight regularizer type  
+// Weight regularizer type
   enum RegularizerType {
     L1 = 0;
     L2 = 1;
