@@ -684,6 +684,7 @@ class SplitLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   Blob<Dtype> difference_;
+  int count_;
 };
 
 // The most natural places should the Regularizer subclasses
@@ -698,7 +699,8 @@ class SplitLayer : public Layer<Dtype> {
 template <typename Dtype>
 class RegularizerAsLossLayer : public Layer<Dtype> {
  public:
-  explicit RegularizerAsLossLayer(const LayerParameter& param);
+  explicit RegularizerAsLossLayer(const LayerParameter& param)
+    : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -708,23 +710,11 @@ class RegularizerAsLossLayer : public Layer<Dtype> {
   virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom) { return; }
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
-     const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+     const bool propagate_down, vector<Blob<Dtype>*>* bottom) { return; }
 
   vector<shared_ptr<Regularizer<Dtype> > > regularizers_;
-  int num_regularizers_;
-};
-
-template <typename Dtype>
-class AccuracyLayer : public Layer<Dtype> {
- public:
-  explicit AccuracyLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
-  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top);
-
-  int count_;
 };
 
 // This function is used to create a pthread that prefetches the window data.

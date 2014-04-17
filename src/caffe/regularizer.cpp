@@ -10,13 +10,13 @@ namespace caffe {
 
 template<typename Dtype>
 Dtype Regularizer<Dtype>::Regularize(Blob<Dtype>* bottom) {
-  Dtype penalty = 0;
+  Dtype penalty;
   if (Caffe::mode() == Caffe::CPU) {
     penalty = Regularize_cpu(bottom);
   } else if (Caffe::mode() == Caffe::GPU) {
     penalty = Regularize_gpu(bottom);
   } else {
-    LOG(FATAL)<< "Unknown mode: " << Caffe::mode();
+    LOG(FATAL) << "Unknown mode: " << Caffe::mode();
   }
   return penalty;
 }

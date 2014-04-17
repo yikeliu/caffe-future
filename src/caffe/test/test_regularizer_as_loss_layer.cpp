@@ -26,7 +26,7 @@ class RegularizationAsLossTest : public ::testing::Test {
       : blob_bottom_data_(new Blob<Dtype>(10, 5, 3, 2)) {
     // fill the values
     FillerParameter filler_param;
-    filler_param.set_std(10);
+    filler_param.set_std(1);
     GaussianFiller<Dtype> filler(filler_param);
     filler.Fill(this->blob_bottom_data_);
     blob_bottom_vec_.push_back(blob_bottom_data_);
@@ -36,8 +36,9 @@ class RegularizationAsLossTest : public ::testing::Test {
   }
 
   void Check(const bool death_condition,
-                      const LayerParameter& layer_param, const Dtype step_size,
-                      const Dtype threshold, const unsigned int seed = 1701);
+             const LayerParameter& layer_param, const Dtype step_size,
+             const Dtype threshold, const unsigned int seed = 1701,
+             const Dtype kink = 0);
 
   Blob<Dtype>* const blob_bottom_data_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
@@ -56,7 +57,8 @@ TYPED_TEST_CASE(RegularizationAsLossTest, Dtypes);
 template<typename Dtype>
 void RegularizationAsLossTest<Dtype>::Check(
     const bool is_death_condition, const LayerParameter& layer_param,
-    const Dtype step_size, const Dtype threshold, const unsigned int seed) {
+    const Dtype step_size, const Dtype threshold, const unsigned int seed,
+    const Dtype kink) {
   if (is_death_condition) {
     ASSERT_DEATH(
         RegularizerAsLossLayer<Dtype> layer(layer_param),
@@ -64,7 +66,7 @@ void RegularizationAsLossTest<Dtype>::Check(
   } else {
     RegularizerAsLossLayer<Dtype> layer(layer_param);
     layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
-    GradientChecker<Dtype> checker(step_size, threshold, seed);
+    GradientChecker<Dtype> checker(step_size, threshold, seed, 0, 0.01);
     for (int loop = 0; loop < 10; ++loop) {
       checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
                                   &(this->blob_top_vec_), 0, -1, -1);
@@ -81,15 +83,15 @@ TYPED_TEST(RegularizationAsLossTest, TestGradient##mode##_##regularizer) { \
   Caffe::set_mode(Caffe::mode); \
   TypeParam coeff[] = {1, 0, -1}; \
   /* Restart from failure crash is too slow. Do not test negative coeff. */ \
-  int num_ceoff = 2; \
+  int num_coeff = 2; \
   bool is_death_condition; \
-  for (int i = 0; i < num_ceoff; ++i) { \
+  for (int i = 0; i < num_coeff; ++i) { \
     LayerParameter layer_param; \
     RegularizerParameter* reg_param = layer_param.add_regularizer(); \
     reg_param->set_type(REG_TYPE(regularizer)); \
     reg_param->set_coeff(coeff[i]); \
     is_death_condition = coeff[i] < 0; \
-    this->Check(is_death_condition, layer_param, 1e-2, 5e-2, 1701); \
+    this->Check(is_death_condition, layer_param, 1e-2, 1e-2); \
   } \
 }
 
@@ -109,10 +111,10 @@ TYPED_TEST(RegularizationAsLossTest, \
   Caffe::set_mode(Caffe::mode); \
   TypeParam coeff[] = {1, 0, -1}; \
   /* Restart from failure crash is too slow. Do not test negative coeff. */ \
-  int num_ceoff = 2; \
+  int num_coeff = 2; \
   bool is_death_condition; \
-  for (int i = 0; i < num_ceoff; ++i) { \
-    for (int j = 0; j < num_ceoff; ++j) { \
+  for (int i = 0; i < num_coeff; ++i) { \
+    for (int j = 0; j < num_coeff; ++j) { \
       LayerParameter layer_param; \
       RegularizerParameter* reg_param; \
       reg_param = layer_param.add_regularizer(); \

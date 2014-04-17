@@ -114,7 +114,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 27
+  // LayerType next available ID: 28
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -139,6 +139,7 @@ message LayerParameter {
     MULTINOMIAL_LOGISTIC_LOSS = 16;
     POOLING = 17;
     POWER = 26;
+    REGULARIZER_AS_LOSS = 27;
     RELU = 18;
     SIGMOID = 19;
     SOFTMAX = 20;
@@ -171,6 +172,8 @@ message LayerParameter {
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
   optional WindowDataParameter window_data_param = 20;
+
+  repeated RegularizerParameter regularizer = 2001;
 
   // DEPRECATED: The layer parameters specified as a V0LayerParameter.
   // This should never be used by any code except to upgrade to the new
@@ -433,17 +436,5 @@ message V0LayerParameter {
   // By default it will concatenate blobs along the channels dimension.
   optional uint32 concat_dim = 65 [default = 1];
   
-  // Weight regularizer type  
-  enum RegularizerType {
-    L1 = 0;
-    L2 = 1;
-    MAX_NORM = 2; // not fully implemented yet
-  }
-  optional RegularizerType regularizer = 60;
-  // Coefficent controls how strong to regularize
-  optional float regularizer_coeff = 61; 
-
   optional HDF5OutputParameter hdf5_output_param = 1001;
-
-  repeated RegularizerParameter regularizer = 2001;
 }

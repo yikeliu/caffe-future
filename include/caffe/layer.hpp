@@ -111,10 +111,8 @@ inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
   default:
     LOG(FATAL) << "Unknown caffe mode " << Caffe::mode();
   }
-  if (layer_param_.regularizer_size() > 0) {
-    for (int i = 0; i < layer_param_.regularizer_size(); ++i) {
-      loss += regularizers_[i]->Regularize(bottom[0]);
-    }
+  for (int i = 0; i < regularizers_.size(); ++i) {
+    loss += regularizers_[i]->Regularize(bottom[0]);
   }
   return loss;
 }
