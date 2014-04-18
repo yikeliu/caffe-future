@@ -8,70 +8,84 @@
 
 namespace caffe {
 
-template<typename Dtype>
-Dtype Regularizer<Dtype>::Regularize(Blob<Dtype>* bottom) {
-  Dtype penalty;
-  if (Caffe::mode() == Caffe::CPU) {
-    penalty = Regularize_cpu(bottom);
-  } else if (Caffe::mode() == Caffe::GPU) {
-    penalty = Regularize_gpu(bottom);
-  } else {
+template <typename Dtype>
+Dtype Regularizer<Dtype>::Loss(Blob<Dtype>* top) {
+  switch (Caffe::mode()) {
+  case Caffe::CPU:
+    return Loss_cpu(top);
+  case Caffe::GPU:
+    return Loss_gpu(top);
+  default:
     LOG(FATAL) << "Unknown mode: " << Caffe::mode();
   }
-  return penalty;
 }
 
-template<typename Dtype>
-Dtype L1Regularizer<Dtype>::Regularize_cpu(Blob<Dtype>* bottom) {
-  if (this->coeff_ == 0) {
-    return Dtype(0.);
+template <typename Dtype>
+void Regularizer<Dtype>::Gradient(Blob<Dtype>* top) {
+  switch (Caffe::mode()) {
+  case Caffe::CPU:
+    Gradient_cpu(top);
+    break;
+  case Caffe::GPU:
+    Gradient_gpu(top);
+    break;
+  default:
+    LOG(FATAL) << "Unknown mode: " << Caffe::mode();
   }
-  const Dtype* data = bottom->cpu_data();
-  Dtype* diff = bottom->mutable_cpu_diff();
-  int count = bottom->count();
-  for (int c = 0; c < count; ++c) {
+}
+
+template <typename Dtype>
+Dtype L1Regularizer<Dtype>::Loss_cpu(Blob<Dtype>* top) {
+  const Dtype* data = top->cpu_data();
+  return this->coeff_ * caffe_cpu_asum(top->count(), data);
+}
+
+template <typename Dtype>
+void L1Regularizer<Dtype>::Gradient_cpu(Blob<Dtype>* top) {
+  const Dtype* data = top->cpu_data();
+  Dtype* diff = top->mutable_cpu_diff();
+  for (int c = 0; c < top->count(); ++c) {
     diff[c] += this->coeff_ * caffe_sign<Dtype>(data[c]);
   }
-  Dtype penalty = caffe_cpu_asum(count, data);
-  return this->coeff_ * penalty;
 }
 
-template<typename Dtype>
-Dtype L2Regularizer<Dtype>::Regularize_cpu(Blob<Dtype>* bottom) {
-  if (this->coeff_ == 0) {
-    return Dtype(0);
-  }
-  const Dtype* data = bottom->cpu_data();
-  Dtype* diff = bottom->mutable_cpu_diff();
-  int count = bottom->count();
-  caffe_axpy<Dtype>(count, this->coeff_ * 2., data, diff);
-  Dtype penalty = caffe_cpu_dot<Dtype>(count, data, data);
-  return this->coeff_ * penalty;
+template <typename Dtype>
+Dtype L2Regularizer<Dtype>::Loss_cpu(Blob<Dtype>* top) {
+  const Dtype* data = top->cpu_data();
+  return this->coeff_ * caffe_cpu_dot<Dtype>(top->count(), data, data);
 }
 
-template<typename Dtype>
-Dtype MaxNormRegularizer<Dtype>::Regularize_cpu(Blob<Dtype>* bottom) {
-  if (this->coeff_ == 0) {
-    return Dtype(0);
-  }
-  const Dtype* data = bottom->cpu_data();
-  Dtype* diff = bottom->mutable_cpu_diff();
-  int count = bottom->count();
-  Dtype penalty = 0;
-  // TODO: Implement MaxNormRegularizer::Regularize_cpu
-  return this->coeff_ * penalty;
+template <typename Dtype>
+void L2Regularizer<Dtype>::Gradient_cpu(Blob<Dtype>* top) {
+  const Dtype* data = top->cpu_data();
+  Dtype* diff = top->mutable_cpu_diff();
+  caffe_axpy<Dtype>(top->count(), this->coeff_ * 2., data, diff);
 }
 
-template<typename Dtype>
+template <typename Dtype>
+Dtype MaxNormRegularizer<Dtype>::Loss_cpu(Blob<Dtype>* top) {
+  // TODO: Implement MaxNormRegularizer::Loss_cpu
+  return this->coeff_ * 0;
+}
+
+template <typename Dtype>
+void MaxNormRegularizer<Dtype>::Gradient_cpu(Blob<Dtype>* top) {
+  // TODO: Implement MaxNormRegularizer::Gradient_cpu
+  const Dtype* data = top->cpu_data();
+  Dtype* diff = top->mutable_cpu_diff();
+}
+
+template <typename Dtype>
 Regularizer<Dtype>* GetRegularizer(const RegularizerParameter& param) {
   const RegularizerParameter_RegularizerType type = param.type();
-  if (type == REG_TYPE(L1)) {
+  switch (type) {
+  case REG_TYPE(L1):
     return new L1Regularizer<Dtype>(param);
-  } else if (type == REG_TYPE(L2)) {
+  case REG_TYPE(L2):
     return new L2Regularizer<Dtype>(param);
-  } else if (type == REG_TYPE(MAX_NORM)) {
+  case REG_TYPE(MAX_NORM):
     return new MaxNormRegularizer<Dtype>(param);
-  } else {
+  default:
     LOG(FATAL) << "Unknown regularizer type: " << type;
   }
   // just to suppress old compiler warnings.

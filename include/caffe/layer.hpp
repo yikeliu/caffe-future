@@ -112,7 +112,9 @@ inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
     LOG(FATAL) << "Unknown caffe mode " << Caffe::mode();
   }
   for (int i = 0; i < regularizers_.size(); ++i) {
-    loss += regularizers_[i]->Regularize(bottom[0]);
+    for (int j = 0; j < top->size(); j++) {
+      loss += regularizers_[i]->Loss((*top)[j]);
+    }
   }
   return loss;
 }
@@ -121,6 +123,11 @@ template <typename Dtype>
 inline void Layer<Dtype>::Backward(const vector<Blob<Dtype>*>& top,
     const bool propagate_down,
     vector<Blob<Dtype>*>* bottom) {
+  for (int i = 0; i < regularizers_.size(); ++i) {
+    for (int j = 0; j < top.size(); j++) {
+      regularizers_[i]->Gradient(top[j]);
+    }
+  }
   switch (Caffe::mode()) {
   case Caffe::CPU:
     Backward_cpu(top, propagate_down, bottom);

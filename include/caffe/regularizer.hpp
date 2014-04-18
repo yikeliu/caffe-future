@@ -15,7 +15,7 @@ class Regularizer {
   explicit Regularizer(const RegularizerParameter& param)
       : coeff_(Dtype(param.coeff())) {
     if (coeff_ < 0) {
-      LOG(FATAL)<<
+      LOG(FATAL) <<
       "Regularizer coefficient must be greater than or equal to zero";
     }
   }
@@ -23,9 +23,12 @@ class Regularizer {
   virtual ~Regularizer() {
   }
 
-  virtual Dtype Regularize(Blob<Dtype>* bottom);
-  virtual Dtype Regularize_cpu(Blob<Dtype>* bottom) = 0;
-  virtual Dtype Regularize_gpu(Blob<Dtype>* bottom) = 0;
+  virtual Dtype Loss(Blob<Dtype>* top);
+  virtual Dtype Loss_cpu(Blob<Dtype>* top) = 0;
+  virtual Dtype Loss_gpu(Blob<Dtype>* top) = 0;
+  virtual void Gradient(Blob<Dtype>* top);
+  virtual void Gradient_cpu(Blob<Dtype>* top) = 0;
+  virtual void Gradient_gpu(Blob<Dtype>* top) = 0;
 
   inline Dtype coeff() {
     return coeff_;
@@ -52,8 +55,10 @@ class type##Regularizer : public Regularizer<Dtype> { \
   virtual ~type##Regularizer() { \
   } \
   \
-  virtual Dtype Regularize_cpu(Blob<Dtype>* bottom); \
-  virtual Dtype Regularize_gpu(Blob<Dtype>* bottom); \
+  virtual Dtype Loss_cpu(Blob<Dtype>* top); \
+  virtual Dtype Loss_gpu(Blob<Dtype>* top); \
+  virtual void Gradient_cpu(Blob<Dtype>* top); \
+  virtual void Gradient_gpu(Blob<Dtype>* top); \
   \
   /* NOLINT_NEXT_LINE(whitespace/indent) */ \
  protected: \
