@@ -20,6 +20,11 @@ class Solver {
   inline void Solve(const string resume_file) { Solve(resume_file.c_str()); }
   virtual ~Solver() {}
   inline shared_ptr<Net<Dtype> > net() { return net_; }
+  // The Solver::Snapshot function implements the basic snapshotting utility
+  // that stores the learned net. You should implement the SnapshotSolverState()
+  // function that produces a SolverState protocol buffer that needs to be
+  // written to disk together with the learned net.
+  void Snapshot();
 
  protected:
   // PreSolve is run before any solving iteration starts, allowing one to
@@ -27,11 +32,6 @@ class Solver {
   virtual void PreSolve() {}
   // Get the update value for the current iteration.
   virtual void ComputeUpdateValue() = 0;
-  // The Solver::Snapshot function implements the basic snapshotting utility
-  // that stores the learned net. You should implement the SnapshotSolverState()
-  // function that produces a SolverState protocol buffer that needs to be
-  // written to disk together with the learned net.
-  void Snapshot();
   // The test routine
   void Test();
   virtual void SnapshotSolverState(SolverState* state) = 0;

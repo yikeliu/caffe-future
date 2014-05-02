@@ -375,6 +375,7 @@ class CaffeSGDSolver {
     CheckFile(resume_file);
     return solver_->Solve(resume_file);
   }
+  void Snapshot() { solver_->Snapshot(); }
 
  protected:
   shared_ptr<CaffeNet> net_;
@@ -421,7 +422,8 @@ BOOST_PYTHON_MODULE(_caffe) {
       "SGDSolver", boost::python::init<string>())
       .add_property("net", &CaffeSGDSolver::net)
       .def("solve",        &CaffeSGDSolver::Solve)
-      .def("solve",        &CaffeSGDSolver::SolveResume);
+      .def("solve",        &CaffeSGDSolver::SolveResume)
+      .def("snapshot",     &CaffeSGDSolver::Snapshot);
 
   boost::python::class_<vector<CaffeBlob> >("BlobVec")
       .def(vector_indexing_suite<vector<CaffeBlob>, true>());
